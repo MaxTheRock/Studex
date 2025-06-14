@@ -1,12 +1,9 @@
 from colorama import Fore
 import os
 import json
-import inquirer
+import questionary
 import time
-import curses
-from functools import partial
 from programs import dashboard as dash
-
 
 def typing_print(text, delay=0.05):
     for char in text:
@@ -19,7 +16,8 @@ def green(text): typing_print(Fore.GREEN + text + Fore.RESET)
 def cyan(text): typing_print(Fore.CYAN + text + Fore.RESET)
 def blue(text): typing_print(Fore.BLUE + text + Fore.RESET)
 
-def clear(): print("\033[H\033[J", end="")
+def clear():
+    print("\033[H\033[J", end="")
 
 def school_name_formatter(school_name):
     school_name = school_name.lower()
@@ -30,11 +28,10 @@ def school_name_formatter(school_name):
 def main():
     clear()
     print("Checking for user info...")
+    clear()
     if os.path.exists("data/user_info.json"):
         with open("data/user_info.json", "r") as file:
-            user_info = json.load(file)
-            dash.pre_curses_intro(user_info)
-            curses.wrapper(partial(dash.main))
+            dash.main(json.load(file))
     else:
         clear()
         cyan("⭐ Welcome to Studex! Let's set up your profile. ⭐")
@@ -52,16 +49,14 @@ def main():
         time.sleep(0.5)
         cyan("⭐ Great, let's now select your subjects. ⭐")
         time.sleep(0.5)
-        subject_choices = ["Chemistry"]
-        questions = [
-            inquirer.Checkbox(
-                'subjects',
-                message="Select all subjects you take (space to select and enter to submit)",
-                choices=subject_choices,
-            )
-        ]
-        answers = inquirer.prompt(questions)
-        subjects = answers['subjects'] if answers and 'subjects' in answers else []
+
+        subject_choices = ["Chemistry", "Biology", "Physics", "Maths"]
+
+        subjects = questionary.checkbox(
+            "Select all subjects you take:",
+            choices=subject_choices
+        ).ask()
+
         with open("data/user_info.json", "w") as file:
             user_data = {
                 "forename": forename,
@@ -74,6 +69,7 @@ def main():
                 "progress": {}
             }
             file.write(json.dumps(user_data, indent=2))
+
         clear()
         green("User info saved successfully!")
         time.sleep(1)
